@@ -12,6 +12,7 @@ class Game:
 
         # General constants
         self.FPS = 60
+        self.SAVE_EVERY = 30 # seconds
 
         self.SIZE = vec2(320, 180)
         self.WINDOW_SIZE = self.SIZE * 4
@@ -23,9 +24,13 @@ class Game:
 
         # Game objects
         self.camera = Camera((0, 0), self.SIZE)
+        # self.cursor = Camera([0, 0], [6, 6])
         self.tiles = Tiles(self)
 
         self.player = Player()
+
+
+        self.tick = 1
     
     def show_chunks(self):
         for x in range(100):
@@ -38,21 +43,38 @@ class Game:
         running = True
         clock = pygame.time.Clock()
 
+
+        save_counter = self.SAVE_EVERY
+
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
 
             self.camera.move_arrow()
+            # self.cursor.move_arrow()
             
             self.screen.fill((0, 0, 0))
 
-            self.tiles.draw_hit()
+            self.tiles.draw()
             self.tiles.view_chunks()
-            self.show_chunks()
+            # self.show_chunks()
+            
+            # if self.tiles.get_tile(self.cursor.get_pos()):
+            #     pygame.draw.rect(self.screen, (255, 255, 255), self.cursor.rect, 1)
+            # else:
+            #     pygame.draw.rect(self.screen, (0, 0, 255), self.cursor.rect, 1)
 
             # pygame.draw.rect(self.screen, (0, 255, 255), [0, 0, 320, 180], 1) # Camera rect
-
+            if self.tick < self.FPS:
+                self.tick += 1
+            else:
+                self.tick = 1
+                if save_counter > 0:
+                    save_counter -= 1
+                else:
+                    save_counter = self.SAVE_EVERY
+                    self.tiles.save()
             clock.tick(self.FPS)
             pygame.transform.scale(self.screen, self.WINDOW_SIZE, self.window)
             pygame.display.flip()
