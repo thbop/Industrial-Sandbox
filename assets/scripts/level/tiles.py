@@ -32,7 +32,7 @@ def load_tile_row(y, s=6):
 tss = spritesheet('assets/graphics/tiles.png')
 tdefs = [
     0, 
-    load_tile_row(0)
+    load_tile_row(6)
 ]
 
 

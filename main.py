@@ -1,6 +1,9 @@
 import pygame
 from pygame.math import Vector2 as vec2
 
+import moderngl
+from array import array
+
 from assets.scripts.camera import Camera
 from assets.scripts.actors.player import Player
 from assets.scripts.level.tiles import Tiles
@@ -18,9 +21,26 @@ class Game:
         self.WINDOW_SIZE = self.SIZE * 4
         
         # Window initialization
-        self.window = pygame.display.set_mode(self.WINDOW_SIZE)
+        self.window = pygame.display.set_mode(self.WINDOW_SIZE, pygame.OPENGL | pygame.DOUBLEBUF)
         pygame.display.set_caption('Game')
         self.screen = pygame.Surface(self.SIZE)
+        self.ctx = moderngl.create_context()
+
+        self.quad_buffer = self.ctx.buffer(data=array('f', [
+            -1.0, 1.0, 0.0, 0.0,
+            1.0, 1.0, 1.0, 0.0,
+            -1.0, -1.0, 0.0, 1.0,
+            1.0, -1.0, 1.0, 1.0
+        ]))
+
+        self.vert_shader = open('assets/scripts/shaders/vert.glsl').read()
+
+        self.frag_shader = open('assets/scripts/shaders/frag.glsl').read()
+
+        self.program = self.ctx.program(vertex_shader=self.vert_shader, fragment_shader=self.frag_shader)
+        self.render_object = self.ctx.vertex_array(self.program, [(self.quad_buffer, '2f 2f', 'vert', 'texcoord')])
+        
+        
 
         # Game objects
         self.camera = Camera((0, 0), self.SIZE)
@@ -31,6 +51,13 @@ class Game:
 
 
         self.tick = 1
+    
+    def surf_to_texture(self, surf):
+        tex = self.ctx.texture(surf.get_size(), 4)
+        tex.filter = (moderngl.NEAREST, moderngl.NEAREST)
+        tex.swozzle = 'BGRA'
+        tex.write(surf.get_view('1'))
+        return tex
     
     def show_chunks(self):
         for x in range(100):
@@ -46,10 +73,12 @@ class Game:
 
         save_counter = self.SAVE_EVERY
 
+
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+
 
             self.camera.move_arrow()
             # self.cursor.move_arrow()
@@ -66,6 +95,18 @@ class Game:
             #     pygame.draw.rect(self.screen, (0, 0, 255), self.cursor.rect, 1)
 
             # pygame.draw.rect(self.screen, (0, 255, 255), [0, 0, 320, 180], 1) # Camera rect
+            
+
+            
+            frame_tex = self.surf_to_texture(pygame.transform.scale(self.screen, self.WINDOW_SIZE))
+            frame_tex.use(0)
+            self.program['tex'] = 0
+            self.render_object.render(mode=moderngl.TRIANGLE_STRIP)
+
+            pygame.display.flip()
+
+            frame_tex.release()
+
             if self.tick < self.FPS:
                 self.tick += 1
             else:
@@ -76,8 +117,8 @@ class Game:
                     save_counter = self.SAVE_EVERY
                     self.tiles.save()
             clock.tick(self.FPS)
-            pygame.transform.scale(self.screen, self.WINDOW_SIZE, self.window)
-            pygame.display.flip()
+            
+    
 
 
 if __name__ == '__main__':
