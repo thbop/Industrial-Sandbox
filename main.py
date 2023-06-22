@@ -83,7 +83,7 @@ class Game:
             self.camera.move_arrow()
             # self.cursor.move_arrow()
             
-            self.screen.fill((0, 0, 0))
+            self.screen.fill((243, 208, 243))
 
             self.tiles.draw()
             self.tiles.view_chunks()
@@ -98,7 +98,7 @@ class Game:
             
 
             
-            frame_tex = self.surf_to_texture(pygame.transform.scale(self.screen, self.WINDOW_SIZE))
+            frame_tex = self.surf_to_texture(self.screen)
             frame_tex.use(0)
             self.program['tex'] = 0
             self.render_object.render(mode=moderngl.TRIANGLE_STRIP)
